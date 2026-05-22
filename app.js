@@ -390,6 +390,7 @@ function refreshAiCell(r,c){
   if(!cell) return;
   cell.classList.remove('hit','miss','sunk','attacked');
   cell.innerHTML='';
+  const heat=cell.querySelector('.heat-cell');
   
   const v=playerView[r][c];
   if(v===HIT){
@@ -427,21 +428,24 @@ function playerFire(r,c){
   if(isHit){
     playerHits++;
     shakeCell(`ac-${r}-${c}`);
+    // Check if sunk
     const ship = aiShips.find(s=>!s.sunk&&s.cells.some(([rr,cc])=>rr===r&&cc===c));
     if(ship && ship.cells.every(([rr,cc])=>playerView[rr][cc]===HIT)){
       ship.sunk=true;
       aiRemaining = aiRemaining.filter(s=>s.name!==ship.name);
+      // Mark sunk on fleet sidebar
       const idx=FLEET.findIndex(f=>f.name===ship.name);
       if(idx>=0){
         const fitem=document.getElementById(`fleet-item-${idx}`);
         if(fitem) fitem.className='fleet-item sunk-ship';
       }
+      // Refresh cells
       ship.cells.forEach(([rr,cc])=>refreshAiCell(rr,cc));
       log('sunk',`▣ ${ship.name} (${ship.sym}) SUNK!`);
       updateShipCounters();
       if(checkWin()) return;
     } else {
-      log('player',`→ ${COLS[r]}${r+1}... HIT at ${COLS[r]}${c+1}!`);
+      log('player',`→ ${COLS[r]}${r+1+1-1}... HIT at ${COLS[r]}${c+1}!`);
     }
   } else {
     log('player',`→ MISS at ${COLS[r]}${c+1}.`);
@@ -452,6 +456,7 @@ function playerFire(r,c){
   updateTurnUI();
   if(showHeatmap) computeAndRenderHeatmap();
 
+  // AI turn after delay
   setTimeout(aiTurn, 900);
 }
 
@@ -464,6 +469,7 @@ function aiTurn(){
   document.getElementById('ai-thinking').classList.add('show');
   document.getElementById('ai-board-label').textContent='ENEMY WATERS — AI Computing…';
 
+  // Show computing for dramatic effect
   const thinkTime = 600 + Math.random()*600;
   setTimeout(()=>{
     aiThinking=false;
@@ -474,9 +480,11 @@ function aiTurn(){
 }
 
 function executeAiMove(){
+  // Compute PDM
   const pdm = computePDM(aiView, aiHitStack.length>0 ? null : playerShips.filter(s=>!s.sunk));
   currentPDM = computePDM(aiView, playerShips.filter(s=>!s.sunk));
 
+  // Determine move
   const [r,c] = huntTarget();
   aiAttacked.add(`${r},${c}`);
 
@@ -489,9 +497,11 @@ function executeAiMove(){
     aiHitStack.push([r,c]);
     shakeCell(`pc-${r}-${c}`);
 
+    // Check if AI sunk a ship
     const ship = playerShips.find(s=>!s.sunk&&s.cells.some(([rr,cc])=>rr===r&&cc===c));
     if(ship && ship.cells.every(([rr,cc])=>aiView[rr][cc]===HIT)){
       ship.sunk=true;
+      // Remove from hitStack
       aiHitStack = aiHitStack.filter(([hr,hc])=>!ship.cells.some(([sr,sc])=>sr===hr&&sc===hc));
       ship.cells.forEach(([rr,cc])=>refreshPlayerCell(rr,cc));
       updateFleetList('battle');
@@ -505,6 +515,7 @@ function executeAiMove(){
     log('ai',`AI MISS at ${COLS[r]}${c+1}.`);
   }
 
+  // Update AI mode badge
   const modeEl = document.getElementById('ai-mode-badge');
   if(aiHitStack.length>0){
     modeEl.className='ai-mode target'; modeEl.textContent='TARGET';
@@ -519,7 +530,7 @@ function executeAiMove(){
 }
 
 // ─────────────────────────────────────────────────────────
-//  AI ALGORITHMS (PDM & TARGET SEARCH)
+//  AI ALGORITHMS
 // ─────────────────────────────────────────────────────────
 function computePDM(boardView, remaining){
   const map = Array.from({length:GRID},()=>Array(GRID).fill(0));
@@ -583,7 +594,7 @@ function huntTarget(){
       if(horiz){
         const r=rows[0], minC=Math.min(...cols), maxC=Math.max(...cols);
         if(minC-1>=0&&!aiAttacked.has(`${r},${minC-1}`)) tMap[r][minC-1]=HIGH;
-        if(maxC+1<GRID&&!aiAttacked.has(`${r},./styles`)) tMap[r][maxC+1]=HIGH;
+        if(maxC+1<GRID&&!aiAttacked.has(`${r},${maxC+1}`)) tMap[r][maxC+1]=HIGH;
       } else {
         const c=cols[0], minR=Math.min(...rows), maxR=Math.max(...rows);
         if(minR-1>=0&&!aiAttacked.has(`${minR-1},${c}`)) tMap[minR-1][c]=HIGH;
@@ -593,6 +604,7 @@ function huntTarget(){
 
     const [br,bc]=selectBest(tMap);
     if(br!==-1) return [br,bc];
+    // Fallback: clear corrupt hit stack and retry as hunt
     aiHitStack=[];
   }
 
@@ -600,6 +612,7 @@ function huntTarget(){
   const remaining = playerShips.filter(s=>!s.sunk);
   const pdm = computePDM(aiView, remaining);
 
+  // Parity Search: skip odd-parity cells if min ship ≥ 2
   const minLen = remaining.length>0 ? Math.min(...remaining.map(s=>s.len)) : 1;
   if(minLen>=2){
     for(let r=0;r<GRID;r++)
@@ -607,6 +620,7 @@ function huntTarget(){
         if((r+c)%2!==0) pdm[r][c]=0;
   }
 
+  // Zero out already attacked
   for(const key of aiAttacked){
     const [ar,ac]=key.split(',').map(Number);
     pdm[ar][ac]=0;
@@ -615,9 +629,7 @@ function huntTarget(){
   return selectBest(pdm);
 }
 
-// ─────────────────────────────────────────────────────────
-//  PLAYER PDM HEAT MAP DISPLAY
-// ─────────────────────────────────────────────────────────
+// Player PDM for heat map display
 function computeAndRenderHeatmap(){
   if(!showHeatmap) return;
   const remaining = aiShips.filter(s=>!s.sunk);
@@ -646,6 +658,7 @@ function computeAndRenderHeatmap(){
     }
   }
   currentPDM=pdm;
+  // Find max for normalization
   let maxVal=0;
   for(let r=0;r<GRID;r++) for(let c=0;c<GRID;c++) if(pdm[r][c]>maxVal) maxVal=pdm[r][c];
 
@@ -653,6 +666,7 @@ function computeAndRenderHeatmap(){
     for(let c=0;c<GRID;c++){
       const cell=document.getElementById(`ac-${r}-${c}`);
       if(!cell) continue;
+      // Remove old heat
       const old=cell.querySelector('.heat-cell');
       if(old) old.remove();
       if(playerView[r][c]!==EMPTY) continue;
@@ -673,6 +687,7 @@ function applyHeatToCell(cell,r,c,norm){
   }
   const heat=document.createElement('div');
   heat.className='heat-cell';
+  // Color: low=dark blue, mid=amber, high=red
   const r2=Math.round(norm*200);
   const g=Math.round(norm<.5?norm*2*150:150*(1-norm*2+1));
   const b=Math.round((1-norm)*100);
@@ -745,6 +760,12 @@ function updateTurnUI(){
   }
 }
 
+// ── CSS shake injection ──
+const style=document.createElement('style');
+style.textContent=`
+@keyframes hitShake{\n  0%{transform:translate(0,0)}\n  20%{transform:translate(-3px,2px)}\n  40%{transform:translate(3px,-2px)}\n  60%{transform:translate(-2px,3px)}\n  80%{transform:translate(2px,-1px)}\n  100%{transform:translate(0,0)}\n}`;
+document.head.appendChild(style);
+
 function updateShipCounters(){
   const pl=playerShips.filter(s=>!s.sunk).length;
   const al=aiShips.filter(s=>!s.sunk).length;
@@ -767,7 +788,7 @@ function shakeCell(id){
 }
 
 // ─────────────────────────────────────────────────────────
-//  LOG SYSTEM
+//  LOG
 // ─────────────────────────────────────────────────────────
 let logCount=0;
 function log(type,msg){
@@ -793,20 +814,12 @@ document.addEventListener('keydown',e=>{
   }
 });
 
+// ─────────────────────────────────────────────────────────
+//  RESET
+// ─────────────────────────────────────────────────────────
 function resetGame(){ init(); }
 
-// Inject custom shake animation
-const style=document.createElement('style');
-style.textContent=`
-@keyframes hitShake{
-  0%{transform:translate(0,0)}
-  20%{transform:translate(-3px,2px)}
-  40%{transform:translate(3px,-2px)}
-  60%{transform:translate(-2px,3px)}
-  80%{transform:translate(2px,-1px)}
-  100%{transform:translate(0,0)}
-}`;
-document.head.appendChild(style);
-
-// Bootstrap Game
+// ─────────────────────────────────────────────────────────
+//  BOOT
+// ─────────────────────────────────────────────────────────
 init();
