@@ -1259,8 +1259,19 @@ function hideStartMenu() {
 
 function setDifficulty(level) {
   currentDifficulty = level;
+
   document.querySelectorAll('.diff-btn').forEach(btn => btn.classList.remove('active'));
   document.getElementById(`diff-${level}`).classList.add('active');
+
+  updateDifficultyInfo();
+}
+
+function updateDifficultyInfo() {
+  const diff = DIFFICULTIES[currentDifficulty];
+
+  document.getElementById('difficulty-grid').textContent = `${diff.grid} x ${diff.grid}`;
+  document.getElementById('difficulty-boats').textContent = diff.fleet.length;
+  document.getElementById('difficulty-fleet').textContent = diff.fleet.join(', ');
 }
 
 function applyDifficulty() {
@@ -1275,6 +1286,16 @@ function applyDifficulty() {
   else root.style.setProperty('--cell', '42px');
 
   root.style.setProperty('--grid-size', GRID);
+}
+function openDifficultyMenu() {
+  document.getElementById('difficulty-picker').style.display = 'block';
+  document.getElementById('start-menu-actions').style.display = 'none';
+  updateDifficultyInfo();
+}
+
+function backToMainMenu() {
+  document.getElementById('difficulty-picker').style.display = 'none';
+  document.getElementById('start-menu-actions').style.display = 'flex';
 }
 
 function menuNewGame() {
@@ -1296,8 +1317,5 @@ function menuExit() {
   alert('Exit is not supported in most browsers. You can close the tab manually.');
 }
 
-// ─────────────────────────────────────────────────────────
-// BOOT
-// ─────────────────────────────────────────────────────────
 applyDifficulty();
 init();

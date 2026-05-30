@@ -73,7 +73,7 @@
           <div class="divider"></div>
 
           <button class="btn" id="replay-btn" onclick="openReplay()" style="display:none">⏮ REPLAY BATTLE</button>
-          <button class="btn danger" onclick="resetGame()">↺ NEW GAME</button>
+          <button class="menu-btn primary" onclick="openDifficultyMenu()">NEW GAME</button>
         </div>
 
         <div class="divider"></div>
@@ -224,27 +224,39 @@
     </div>
   </div>
 
-  <div id="start-menu" class="start-menu show">
-    <div class="difficulty-picker">
-      <div class="difficulty-label">DIFFICULTY</div>
-      <div class="difficulty-options">
-        <button class="diff-btn" id="diff-easy" onclick="setDifficulty('easy')">EASY</button>
-        <button class="diff-btn active" id="diff-medium" onclick="setDifficulty('medium')">MEDIUM</button>
-        <button class="diff-btn" id="diff-hard" onclick="setDifficulty('hard')">HARD</button>
-      </div>
+<div id="start-menu" class="start-menu show">
+  <div class="start-menu-box">
+    <div class="start-menu-title">BATTLESHIP</div>
+    <div class="start-menu-sub">Silver Fleet Edition</div>
+
+    <div id="start-menu-actions" class="start-menu-actions">
+      <button class="menu-btn primary" onclick="openDifficultyMenu()">NEW GAME</button>
+      <button class="menu-btn" onclick="openCredits()">CREDITS</button>
+      <button class="menu-btn danger" onclick="menuExit()">EXIT</button>
     </div>
 
-    <div class="start-menu-box">
-      <div class="start-menu-title">BATTLESHIP</div>
-      <div class="start-menu-sub">Silver Fleet Edition</div>
+    <div id="difficulty-picker" class="difficulty-picker" style="display:none;">
+      <div class="difficulty-label">SELECT DIFFICULTY</div>
 
-      <div class="start-menu-actions">
-        <button class="menu-btn primary" onclick="menuNewGame()">NEW GAME</button>
-        <button class="menu-btn" onclick="openCredits()">CREDITS</button>
-        <button class="menu-btn danger" onclick="menuExit()">EXIT</button>
+      <div class="difficulty-options">
+        <button id="diff-easy" class="diff-btn" onclick="setDifficulty('easy')">EASY</button>
+        <button id="diff-medium" class="diff-btn active" onclick="setDifficulty('medium')">MEDIUM</button>
+        <button id="diff-hard" class="diff-btn" onclick="setDifficulty('hard')">HARD</button>
+      </div>
+
+      <div id="difficulty-info" class="difficulty-info">
+        <div><span>GRID:</span> <strong id="difficulty-grid">10 x 10</strong></div>
+        <div><span>BOATS:</span> <strong id="difficulty-boats">4</strong></div>
+        <div><span>FLEET:</span> <strong id="difficulty-fleet">Battleship, Cruiser, Submarine, Destroyer</strong></div>
+      </div>
+
+      <div style="margin-top:12px; display:flex; gap:10px;">
+        <button class="menu-btn primary" onclick="menuNewGame()">START</button>
+        <button class="menu-btn" onclick="backToMainMenu()">BACK</button>
       </div>
     </div>
   </div>
+</div>
 
   <div id="credits-overlay" class="start-menu">
     <div class="start-menu-box credits-box">
