@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BATTLESHIP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <span id="phase-badge" style="display:none"></span>
+  <span id="ai-mode-badge" style="display:none"></span>
+
+  <div id="app">
+    <header>
+      <div class="logo">
+        <div class="logo-top">
+          <svg class="logo-anchor" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="5" r="2" />
+            <line x1="12" y1="7" x2="12" y2="22" />
+            <path d="M5 15l7 7 7-7" />
+            <path d="M5 10h14" />
+          </svg>
+          <span class="logo-title">BATTLESHIP</span>
+        </div>
+        <div class="logo-sub">NAVAL COMBAT SIMULATION</div>
+      </div>
+
+      <div class="header-status">
+        <div class="stat-block">
+          <div class="stat-label">TURN</div>
+          <div class="stat-value" id="turn-counter">—</div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <aside class="sidebar">
+        <div class="sidebar-title">FLEET REGISTRY</div>
+        <div class="fleet-list" id="fleet-list"></div>
+        <div class="divider"></div>
+
+        <div id="placement-controls-area">
+          <button class="orient-btn" id="orient-btn" onclick="toggleOrient()">
+            <span id="orient-icon" class="orient-icon">↔</span>
+            <span id="orient-label">HORIZONTAL</span>
+          </button>
+
+          <div class="divider"></div>
+
+          <div class="rng-btn-wrap">
+            <button class="btn amber" onclick="randomPlacement()" style="flex:1">⚄ RANDOM</button>
+            <button class="btn danger" onclick="resetPlacement()" style="flex:1">↺ RESET</button>
+          </div>
+
+          <div class="divider"></div>
+          <div class="hint">Click grid to place · <span>R</span> to rotate · <span>Space</span> for random</div>
+        </div>
+
+        <div id="battle-controls-area" style="display:none">
+          <div id="heatmap-toggle" class="heatmap-toggle" onclick="toggleHeatmap()">
+            <div class="toggle-sw" id="toggle-sw"></div>
+            <span id="prob-label">Heat map: OFF</span>
+          </div>
+
+          <div class="prob-label" style="margin-top:3px">PDM probability overlay</div>
+          <div class="divider"></div>
+
+          <button class="btn" id="replay-btn" onclick="openReplay()" style="display:none">⏮ REPLAY BATTLE</button>
+          <button class="btn danger" onclick="resetGame()">↺ NEW GAME</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="turn-strip">
+          <span class="turn-pip active" id="pip-player"></span>
+          <span style="font-size:.65rem;letter-spacing:.1em">YOU</span>
+          <span style="font-size:.55rem;color:var(--text-dim)">VS</span>
+          <span style="font-size:.65rem;letter-spacing:.1em">AI</span>
+          <span class="turn-pip inactive" id="pip-ai"></span>
+        </div>
+      </aside>
+
+      <div class="center">
+        <div id="placement-phase">
+          <div class="board-outer">
+            <div class="board-label player-label">YOUR WATERS — Place Ships</div>
+            <div class="board-container">
+              <div class="grid placement-grid" id="placement-grid"></div>
+            </div>
+
+            <button class="btn primary" id="start-btn" onclick="startBattle()" disabled
+              style="margin-top:10px; width:100%;">
+              ⚔ DEPLOY FLEET
+            </button>
+          </div>
+        </div>
+
+        <div id="battle-phase" style="display:none">
+          <div class="scoreboard">
+            <div class="score-block">
+              <div class="score-label">YOUR SHIPS</div>
+              <div class="score-value player-c" id="player-ships-left">5</div>
+            </div>
+
+            <div class="score-divider">VS</div>
+
+            <div class="score-block">
+              <div class="score-label">ENEMY SHIPS</div>
+              <div class="score-value ai-c" id="ai-ships-left">5</div>
+            </div>
+          </div>
+
+          <div class="grids-area">
+            <div class="board-outer">
+              <div class="board-wrapper player-board-wrap">
+                <div class="board-label player-label">YOUR WATERS</div>
+                <div class="board-container">
+                  <div class="grid player-grid" id="player-grid"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="board-outer">
+              <div class="board-wrapper ai-board-wrap">
+                <div class="board-label ai-label" id="ai-board-label">ENEMY WATERS — Click to Fire</div>
+                <div class="board-container">
+                  <div class="grid ai-grid" id="ai-grid"></div>
+                  <div class="ai-thinking" id="ai-thinking">
+                    <span class="think-text">AI COMPUTING…</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="log-panel">
+        <div class="log-header">
+          COMBAT LOG
+          <span id="log-count" style="font-size:.6rem;color:var(--text-dim)">0</span>
+        </div>
+        <div class="log-body" id="log-body"></div>
+      </aside>
+    </main>
+  </div>
+
+  <div id="gameover-overlay">
+    <div class="gameover-box">
+      <div id="go-result" class="gameover-result win">VICTORY</div>
+      <div id="go-sub" class="gameover-sub"></div>
+
+      <div class="gameover-stats">
+        <div class="go-stat">
+          <div class="go-stat-val" id="go-turns">0</div>
+          <div class="go-stat-lbl">Turns</div>
+        </div>
+        <div class="go-stat">
+          <div class="go-stat-val" id="go-phits">0</div>
+          <div class="go-stat-lbl">Your Hits</div>
+        </div>
+        <div class="go-stat">
+          <div class="go-stat-val" id="go-aihits">0</div>
+          <div class="go-stat-lbl">AI Hits</div>
+        </div>
+      </div>
+
+      <div class="gameover-btns">
+        <button class="btn primary" onclick="openReplay()">⏮ REPLAY</button>
+        <button class="btn danger" onclick="resetGame()">↺ NEW GAME</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="replay-overlay" class="replay-overlay">
+    <div class="replay-modal">
+      <div class="replay-header">
+        <span class="replay-title">⏮ BATTLE REPLAY</span>
+        <button class="replay-close" onclick="closeReplay()">✕ CLOSE</button>
+      </div>
+
+      <div class="replay-boards">
+        <div class="replay-board-wrap">
+          <div class="replay-board-label you">YOUR FLEET</div>
+          <div class="replay-grid" id="replay-player-grid"></div>
+        </div>
+
+        <div class="replay-board-wrap">
+          <div class="replay-board-label enemy">ENEMY FLEET</div>
+          <div class="replay-grid" id="replay-ai-grid"></div>
+        </div>
+      </div>
+
+      <div class="replay-move-desc" id="replay-desc">Start of battle.</div>
+
+      <input type="range" class="replay-scrubber" id="replay-scrubber" min="0" max="0" value="0"
+        oninput="replayScrub(this.value)">
+
+      <div class="replay-progress">
+        Move <span id="replay-pos">0</span> / <span id="replay-total">0</span>
+      </div>
+
+      <div class="replay-controls" style="margin-top:10px">
+        <button class="replay-btn" onclick="replayGoStart()">⏮</button>
+        <button class="replay-btn" onclick="replayStep(-1)">◀ BACK</button>
+        <button class="replay-btn play-btn" id="replay-play-btn" onclick="replayTogglePlay()">▶ PLAY</button>
+        <button class="replay-btn" onclick="replayStep(1)">NEXT ▶</button>
+        <button class="replay-btn" onclick="replayGoEnd()">⏭</button>
+
+        <select class="replay-speed" id="replay-speed">
+          <option value="1200">Slow</option>
+          <option value="700" selected>Normal</option>
+          <option value="350">Fast</option>
+          <option value="120">Ultra</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div id="start-menu" class="start-menu show">
+    <div class="difficulty-picker">
+      <div class="difficulty-label">DIFFICULTY</div>
+      <div class="difficulty-options">
+        <button class="diff-btn" id="diff-easy" onclick="setDifficulty('easy')">EASY</button>
+        <button class="diff-btn active" id="diff-medium" onclick="setDifficulty('medium')">MEDIUM</button>
+        <button class="diff-btn" id="diff-hard" onclick="setDifficulty('hard')">HARD</button>
+      </div>
+    </div>
+
+    <div class="start-menu-box">
+      <div class="start-menu-title">BATTLESHIP</div>
+      <div class="start-menu-sub">Silver Fleet Edition</div>
+
+      <div class="start-menu-actions">
+        <button class="menu-btn primary" onclick="menuNewGame()">NEW GAME</button>
+        <button class="menu-btn" onclick="openCredits()">CREDITS</button>
+        <button class="menu-btn danger" onclick="menuExit()">EXIT</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="credits-overlay" class="start-menu">
+    <div class="start-menu-box credits-box">
+      <div class="start-menu-title">CREDITS</div>
+      <div class="credits-text">
+        <p><strong>Game:</strong> Battleship</p>
+        <p><strong>UI Theme:</strong> Silver with green accents</p>
+        <p><strong>Developer:</strong> Your name here</p>
+        <p><strong>Built with:</strong> HTML, CSS, JavaScript</p>
+      </div>
+
+      <div class="start-menu-actions">
+        <button class="menu-btn primary" onclick="closeCredits()">BACK</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
