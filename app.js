@@ -91,6 +91,25 @@ function init(){
 }
 
 // ─────────────────────────────────────────────────────────
+//  IMAGE HELPER
+// ─────────────────────────────────────────────────────────
+function createShipImage(shipName, len, isH) {
+  const img = document.createElement('img');
+  img.src = `${shipName.toLowerCase()}.png`;
+  img.className = 'ship-img';
+  // Calculate exact pixel span (cells + grid gaps)
+  img.style.width = `calc((var(--cell) * ${len}) + ${len - 1}px)`;
+  img.style.height = `var(--cell)`;
+
+  // If vertical, rotate it perfectly around the center of its anchoring top-left cell
+  if (!isH) {
+    img.style.transformOrigin = `calc(var(--cell) / 2) calc(var(--cell) / 2)`;
+    img.style.transform = `rotate(90deg)`;
+  }
+  return img;
+}
+
+// ─────────────────────────────────────────────────────────
 //  FLEET LIST
 // ─────────────────────────────────────────────────────────
 function buildFleetList(){
@@ -109,7 +128,6 @@ function buildFleetList(){
 }
 
 function updateFleetList(phase2){
-  const ships = phase2==='placement' ? playerShips : playerShips;
   FLEET.forEach((f,i)=>{
     const el = document.getElementById(`fleet-item-${i}`);
     if(!el) return;
@@ -162,13 +180,26 @@ function refreshPlacementGrid(){
   for(let r=0;r<GRID;r++){
     for(let c=0;c<GRID;c++){
       const cell = placementCell(r,c);
-      cell.classList.remove('ship','hover-valid','hover-invalid');
-      cell.innerHTML='';
-      if(playerBoard[r][c]===SHIP){
-        cell.classList.add('ship');
-      }
+      cell.classList.remove('hover-valid','hover-invalid');
+      // Remove any existing ship images to redraw
+      Array.from(cell.children).forEach(child => {
+        if(child.classList.contains('ship-img')) child.remove();
+      });
     }
   }
+
+  // Draw placed ships
+  playerShips.forEach((ship, idx) => {
+    if(ship.cells.length > 0) {
+      const [r, c] = ship.cells[0];
+      const cell = placementCell(r, c);
+      if(!cell) return;
+      
+      const isH = ship.cells.length > 1 ? ship.cells[0][0] === ship.cells[1][0] : true;
+      const img = createShipImage(FLEET[idx].name, ship.len, isH);
+      cell.appendChild(img);
+    }
+  });
 }
 
 function placementCell(r,c){
@@ -179,26 +210,34 @@ function previewShip(r,c){
   clearPreview();
   if(phase!=='PLACEMENT') return;
   if(currentShip>=FLEET.length) return;
-  const len = FLEET[currentShip].len;
-  const cells = getShipCells(r,c,len,orientation);
+  const shipDef = FLEET[currentShip];
+  const cells = getShipCells(r,c,shipDef.len,orientation);
   const valid = canPlace(cells);
+  
   cells.forEach(([rr,cc])=>{
     const el = placementCell(rr,cc);
     if(!el) return;
     el.classList.add(valid?'hover-valid':'hover-invalid');
-    const blk = document.createElement('div');
-    blk.className='ship-block';
-    el.appendChild(blk);
   });
+
+  // Attach Image Preview
+  if(cells.length > 0) {
+    const firstCell = placementCell(cells[0][0], cells[0][1]);
+    if(firstCell) {
+      const img = createShipImage(shipDef.name, shipDef.len, orientation === 'H');
+      img.classList.add('preview');
+      img.style.opacity = '0.6';
+      if(!valid) img.style.filter = 'sepia(1) hue-rotate(-50deg) saturate(5)'; // tint red if invalid
+      firstCell.appendChild(img);
+    }
+  }
 }
 
 function clearPreview(){
   document.querySelectorAll('#placement-grid .hover-valid, #placement-grid .hover-invalid').forEach(el=>{
     el.classList.remove('hover-valid','hover-invalid');
-    el.innerHTML='';
-    const r=parseInt(el.dataset.r), c=parseInt(el.dataset.c);
-    if(playerBoard[r][c]===SHIP) el.classList.add('ship');
   });
+  document.querySelectorAll('#placement-grid .preview').forEach(el => el.remove());
 }
 
 function getShipCells(r,c,len,dir){
@@ -336,27 +375,42 @@ function buildPlayerGrid(){
       const cell=document.createElement('div');
       cell.className='cell';
       cell.id=`pc-${r}-${c}`;
-      if(playerBoard[r][c]===SHIP) cell.classList.add('ship');
       grid.appendChild(cell);
     }
   }
+
+  // Draw player ships
+  playerShips.forEach((ship, idx) => {
+    if(ship.cells.length > 0) {
+      const [r, c] = ship.cells[0];
+      const cell = document.getElementById(`pc-${r}-${c}`);
+      if(!cell) return;
+      const isH = ship.cells.length > 1 ? ship.cells[0][0] === ship.cells[1][0] : true;
+      const img = createShipImage(FLEET[idx].name, ship.len, isH);
+      cell.appendChild(img);
+    }
+  });
 }
 
 function refreshPlayerCell(r,c){
   const cell=document.getElementById(`pc-${r}-${c}`);
   if(!cell) return;
-  cell.classList.remove('hit','miss','sunk','ship');
-  cell.innerHTML='';
+  cell.classList.remove('hit','miss','sunk');
+
+  // Prevent nuking the underlying ship image
+  Array.from(cell.children).forEach(child => {
+    if(child.classList.contains('hit-marker') || child.classList.contains('miss-marker')) {
+      child.remove();
+    }
+  });
+
   const v=aiView[r][c];
-  const hasShip=playerBoard[r][c]===SHIP;
   if(v===HIT){
     cell.classList.add(isPlayerCellSunk(r,c)?'sunk':'hit');
     const m=document.createElement('div'); m.className='hit-marker'; cell.appendChild(m);
   } else if(v===MISS){
     cell.classList.add('miss');
     const m=document.createElement('div'); m.className='miss-marker'; cell.appendChild(m);
-  } else if(hasShip){
-    cell.classList.add('ship');
   }
 }
 
@@ -389,8 +443,12 @@ function refreshAiCell(r,c){
   const cell=document.getElementById(`ac-${r}-${c}`);
   if(!cell) return;
   cell.classList.remove('hit','miss','sunk','attacked');
-  cell.innerHTML='';
-  const heat=cell.querySelector('.heat-cell');
+
+  Array.from(cell.children).forEach(child => {
+    if(child.classList.contains('hit-marker') || child.classList.contains('miss-marker')) {
+      child.remove();
+    }
+  });
   
   const v=playerView[r][c];
   if(v===HIT){
@@ -401,8 +459,21 @@ function refreshAiCell(r,c){
     cell.classList.add('miss','attacked');
     const m=document.createElement('div'); m.className='miss-marker'; cell.appendChild(m);
   }
+  
   if(showHeatmap && currentPDM && v===EMPTY){
     applyHeatToCell(cell,r,c);
+  }
+
+  // Reveal AI ships when sunk
+  if (isAiCellSunk(r,c)) {
+    const ship = aiShips.find(s => s.sunk && s.cells.some(([rr,cc])=>rr===r&&cc===c));
+    if (ship && ship.cells[0][0] === r && ship.cells[0][1] === c && !cell.querySelector('.ship-img')) {
+        const isH = ship.cells.length > 1 ? ship.cells[0][0] === ship.cells[1][0] : true;
+        const img = createShipImage(ship.name, ship.len, isH);
+        img.style.opacity = '0.8';
+        img.style.filter = 'grayscale(1) sepia(1) hue-rotate(-50deg) saturate(3)'; // Give it a destroyed tint
+        cell.appendChild(img);
+    }
   }
 }
 

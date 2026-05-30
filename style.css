@@ -209,7 +209,8 @@ main{flex:1;display:flex;gap:0;padding:0;min-height:0;overflow:hidden;}
 .cell{
   background:var(--bg);position:relative;cursor:default;
   display:flex;align-items:center;justify-content:center;
-  transition:background .15s;overflow:hidden;
+  transition:background .15s;
+  /* Note: Removed 'overflow: hidden' so images can span out to their full width */
 }
 .cell::after{
   content:'';position:absolute;inset:0;
@@ -217,14 +218,25 @@ main{flex:1;display:flex;gap:0;padding:0;min-height:0;overflow:hidden;}
   pointer-events:none;
 }
 
+/* Ship Overlays */
+.ship-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1; /* Below hit markers which are naturally higher */
+  pointer-events: none; /* Passes clicks right through to the cells below */
+  object-fit: contain;
+}
+.ship-img.preview {
+  z-index: 3;
+}
+
 /* placement grid cells */
 .placement-grid .cell{cursor:crosshair;}
 .placement-grid .cell.hover-valid{background:rgba(255,170,0,.15);outline:1px solid var(--amber);}
 .placement-grid .cell.hover-invalid{background:rgba(255,51,85,.12);outline:1px solid var(--red);}
-.placement-grid .cell.ship{background:var(--ship);outline:1px solid var(--ship-b);}
 
 /* battle player grid cells */
-.player-grid .cell.ship{background:var(--ship);}
 .player-grid .cell.hit{background:var(--hit-bg);}
 .player-grid .cell.miss{background:var(--miss-bg);}
 .player-grid .cell.sunk{background:var(--sunk-bg);}
@@ -257,6 +269,7 @@ main{flex:1;display:flex;gap:0;padding:0;min-height:0;overflow:hidden;}
   background:rgba(100,160,200,.3);border:1px solid rgba(100,160,200,.5);
   box-shadow:0 0 6px rgba(100,160,200,.2);
   animation:missPop .3s ease-out;
+  position:relative;z-index:2;
 }
 @keyframes missPop{0%{transform:scale(0);opacity:0}100%{transform:scale(1);opacity:1}}
 
@@ -265,13 +278,6 @@ main{flex:1;display:flex;gap:0;padding:0;min-height:0;overflow:hidden;}
 
 /* heat map overlay */
 .heat-cell{position:absolute;inset:0;pointer-events:none;z-index:1;transition:background .3s;}
-
-/* ship preview block */
-.ship-block{
-  width:calc(var(--cell) - 3px);height:calc(var(--cell) - 3px);
-  background:rgba(255,170,0,.3);border:1px solid var(--amber);border-radius:2px;
-  position:relative;z-index:2;
-}
 
 /* ── TURN INDICATOR ── */
 .turn-strip{
