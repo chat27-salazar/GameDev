@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>BATTLESHIP</title>
+  <title>BATTLESHIP: THE PROBABILISTIC HUNTER</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap"
@@ -29,7 +29,7 @@
           </svg>
           <span class="logo-title">BATTLESHIP</span>
         </div>
-        <div class="logo-sub">NAVAL COMBAT SIMULATION</div>
+        <div class="logo-sub">THE PROBABILISTIC HUNTER | PUP CCIS | C0SC 304</div>
       </div>
 
       <div class="header-status">
@@ -61,6 +61,13 @@
 
           <div class="divider"></div>
           <div class="hint">Click grid to place · <span>R</span> to rotate · <span>Space</span> for random</div>
+
+          <div class="divider" style="margin-top: 12px; margin-bottom: 12px;"></div>
+          
+          <!-- This Back button targets the difficulty picker correctly -->
+          <button class="sidebar-img-btn" onclick="document.getElementById('start-menu').classList.add('show'); openDifficultyMenu();" style="padding: 0; border: none; background: transparent; display: flex; justify-content: center; align-items: center; width: 100%;">
+            <img src="/GAME ASSETS/BUTTONS/BACK.png" alt="Back" style="max-width: 100%; height: auto; max-height: 40px;">
+          </button>
         </div>
 
         <div id="battle-controls-area" style="display:none">
@@ -73,7 +80,10 @@
           <div class="divider"></div>
 
           <button class="btn" id="replay-btn" onclick="openReplay()" style="display:none">⏮ REPLAY BATTLE</button>
-          <button class="menu-btn primary" onclick="openDifficultyMenu()">NEW GAME</button>
+          
+          <button class="sidebar-img-btn" onclick="document.getElementById('start-menu').classList.add('show'); openDifficultyMenu();" style="padding: 0; border: none; background: transparent; display: flex; justify-content: center; align-items: center; width: 100%; margin-top: 12px;">
+            <img src="/GAME ASSETS/BUTTONS/NEW GAME.png" alt="New Game" style="max-width: 100%; height: auto; max-height: 40px;">
+          </button>
         </div>
 
         <div class="divider"></div>
@@ -173,8 +183,12 @@
       </div>
 
       <div class="gameover-btns">
-        <button class="btn primary" onclick="openReplay()">⏮ REPLAY</button>
-        <button class="btn danger" onclick="resetGame()">↺ NEW GAME</button>
+        <button onclick="openReplay()" style="padding: 0; border: none; background: transparent; display: flex; justify-content: center; align-items: center; box-shadow: none;">
+          <img src="/GAME ASSETS/BUTTONS/REPLAY.png" alt="Replay" style="max-width: 100%; height: auto; max-height: 55px;">
+        </button>
+        <button onclick="resetGame(); document.getElementById('start-menu').classList.add('show'); openDifficultyMenu();" style="padding: 0; border: none; background: transparent; display: flex; justify-content: center; align-items: center; box-shadow: none;">
+          <img src="/GAME ASSETS/BUTTONS/NEW GAME.png" alt="New Game" style="max-width: 100%; height: auto; max-height: 55px;">
+        </button>
       </div>
     </div>
   </div>
@@ -224,52 +238,84 @@
     </div>
   </div>
 
-<div id="start-menu" class="start-menu show">
-  <div class="start-menu-box">
-    <div class="start-menu-title">BATTLESHIP</div>
-    <div class="start-menu-sub">Silver Fleet Edition</div>
+  <div id="start-menu" class="start-menu show">
+    <div class="start-menu-box">
+      
+      <div class="start-menu-title" style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+        <svg class="logo-anchor-title" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="5" r="2" />
+          <line x1="12" y1="7" x2="12" y2="22" />
+          <path d="M5 15l7 7 7-7" />
+          <path d="M5 10h14" />
+        </svg>
+        <span>BATTLESHIP</span>
+      </div>
+      <div class="start-menu-sub">Silver Fleet Edition</div>
 
-    <div id="start-menu-actions" class="start-menu-actions">
-      <button class="menu-btn primary" onclick="openDifficultyMenu()">NEW GAME</button>
-      <button class="menu-btn" onclick="openCredits()">CREDITS</button>
-      <button class="menu-btn danger" onclick="menuExit()">EXIT</button>
-    </div>
+      <div id="start-menu-actions" class="start-menu-actions">
+        
+        <button class="menu-btn primary" onclick="openDifficultyMenu()" style="padding: 0; border: none; background: transparent; display: flex; justify-content: center; align-items: center; box-shadow: none;">
+          <img src="/GAME ASSETS/BUTTONS/NEW GAME.png" alt="New Game" style="max-width: 100%; height: auto; max-height: 60px;">
+        </button>
+        
+        <button class="menu-btn" onclick="openCredits()" style="padding: 0; border: none; background: transparent; display: flex; justify-content: center; align-items: center; box-shadow: none;">
+          <img src="/GAME ASSETS/BUTTONS/CREDITS.png" alt="Credits" style="max-width: 100%; height: auto; max-height: 60px;">
+        </button>
+        
+        <button class="menu-btn danger" onclick="menuExit()" style="padding: 0; border: none; background: transparent; display: flex; justify-content: center; align-items: center; box-shadow: none;">
+          <img src="/GAME ASSETS/BUTTONS/EXIT.png" alt="Exit" style="max-width: 100%; height: auto; max-height: 60px;">
+        </button>
 
-    <div id="difficulty-picker" class="difficulty-picker" style="display:none;">
-      <div class="difficulty-label">SELECT DIFFICULTY</div>
-
-      <div class="difficulty-options">
-        <button id="diff-easy" class="diff-btn" onclick="setDifficulty('easy')">EASY</button>
-        <button id="diff-medium" class="diff-btn active" onclick="setDifficulty('medium')">MEDIUM</button>
-        <button id="diff-hard" class="diff-btn" onclick="setDifficulty('hard')">HARD</button>
       </div>
 
-      <div id="difficulty-info" class="difficulty-info">
-        <div><span>GRID:</span> <strong id="difficulty-grid">10 x 10</strong></div>
-        <div><span>BOATS:</span> <strong id="difficulty-boats">4</strong></div>
-        <div><span>FLEET:</span> <strong id="difficulty-fleet">Battleship, Cruiser, Submarine, Destroyer</strong></div>
-      </div>
+      <div id="difficulty-picker" class="difficulty-picker" style="display:none;">
+        <div class="difficulty-label">SELECT DIFFICULTY</div>
 
-      <div style="margin-top:12px; display:flex; gap:10px;">
-        <button class="menu-btn primary" onclick="menuNewGame()">START</button>
-        <button class="menu-btn" onclick="backToMainMenu()">BACK</button>
+        <div class="difficulty-options">
+          <button id="diff-easy" class="diff-btn" onclick="setDifficulty('easy')" style="padding: 4px; border: none; background: transparent; display: flex; justify-content: center; align-items: center;">
+            <img src="/GAME ASSETS/BUTTONS/EASY.png" alt="EASY" style="max-width: 100%; height: auto; max-height: 45px;">
+          </button>
+          <button id="diff-medium" class="diff-btn active" onclick="setDifficulty('medium')" style="padding: 4px; border: none; background: transparent; display: flex; justify-content: center; align-items: center;">
+            <img src="/GAME ASSETS/BUTTONS/MEDIUM.png" alt="MEDIUM" style="max-width: 100%; height: auto; max-height: 45px;">
+          </button>
+          <button id="diff-hard" class="diff-btn" onclick="setDifficulty('hard')" style="padding: 4px; border: none; background: transparent; display: flex; justify-content: center; align-items: center;">
+            <img src="/GAME ASSETS/BUTTONS/HARD.png" alt="HARD" style="max-width: 100%; height: auto; max-height: 45px;">
+          </button>
+        </div>
+
+        <div id="difficulty-info" class="difficulty-info">
+          <div><span>GRID:</span> <strong id="difficulty-grid">10 x 10</strong></div>
+          <div><span>BOATS:</span> <strong id="difficulty-boats">4</strong></div>
+          <div><span>FLEET:</span> <strong id="difficulty-fleet">Battleship, Cruiser, Submarine, Destroyer</strong></div>
+        </div>
+
+        <div style="margin-top:16px; display:flex; gap:10px; justify-content: center;">
+          <button class="menu-btn primary" onclick="menuNewGame()" style="padding: 0; border: none; background: transparent; display: flex; justify-content: center; align-items: center; box-shadow: none; flex: 1;">
+            <img src="/GAME ASSETS/BUTTONS/START.png" alt="START" style="max-width: 100%; height: auto; max-height: 60px;">
+          </button>
+          <button class="menu-btn" onclick="backToMainMenu()" style="padding: 0; border: none; background: transparent; display: flex; justify-content: center; align-items: center; box-shadow: none; flex: 1;">
+            <img src="/GAME ASSETS/BUTTONS/BACK.png" alt="BACK" style="max-width: 100%; height: auto; max-height: 60px;">
+          </button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
   <div id="credits-overlay" class="start-menu">
     <div class="start-menu-box credits-box">
       <div class="start-menu-title">CREDITS</div>
       <div class="credits-text">
-        <p><strong>Game:</strong> Battleship</p>
-        <p><strong>UI Theme:</strong> Silver with green accents</p>
-        <p><strong>Developer:</strong> Your name here</p>
+        <p><strong>Game:</strong> Battleship: The Probabilistic Hunter</p>
+        <p>This game is submitted in partial fulfillment of the course COSC 304 - Introduction to AI.</p>
+        <p><strong>Developers:</strong> Elijah Jonathan De Guzman, Lachlan Rey Loyola, Aldraine Obiena, Charisse Jen Salazar, Jared Bayag</p>
         <p><strong>Built with:</strong> HTML, CSS, JavaScript</p>
       </div>
 
       <div class="start-menu-actions">
-        <button class="menu-btn primary" onclick="closeCredits()">BACK</button>
+        <button class="menu-btn primary" onclick="closeCredits()" style="padding: 0; border: none; background: transparent; display: flex; justify-content: center; align-items: center; box-shadow: none;">
+          <img src="/GAME ASSETS/BUTTONS/BACK.png" alt="BACK" style="max-width: 100%; height: auto; max-height: 60px;">
+        </button>
       </div>
     </div>
   </div>

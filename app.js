@@ -1,4 +1,37 @@
 // ─────────────────────────────────────────────────────────
+// AUDIO ASSETS & MANAGER
+// ─────────────────────────────────────────────────────────
+const sfxClick = new Audio('/GAME ASSETS/SFX/CLICK.wav');
+const sfxFired = new Audio('/GAME ASSETS/SFX/SHOT FIRED.wav');
+const sfxHit = new Audio('/GAME ASSETS/SFX/SHOT HIT.mp3');
+const sfxMiss = new Audio('/GAME ASSETS/SFX/SHOT MISSED.wav');
+const bgMusic = new Audio('/GAME ASSETS/SFX/BG SONG.mp3');
+
+// Configure Background Music
+bgMusic.loop = true;
+bgMusic.volume = 0.35; // Lowered volume so it stays in the background
+
+// Function to play sound effects overlapping cleanly
+function playSound(snd) {
+  if (!snd) return;
+  snd.currentTime = 0;
+  snd.play().catch(e => console.warn('Audio blocked:', e));
+}
+
+// Start BGM on the very first screen click (bypasses browser auto-play restrictions)
+document.addEventListener('click', function initAudio() {
+  bgMusic.play().catch(e => console.warn('BGM blocked:', e));
+  document.removeEventListener('click', initAudio);
+}, { once: true });
+
+// Play click sound anytime a button is pressed
+document.addEventListener('click', (e) => {
+  if (e.target.closest('button')) {
+    playSound(sfxClick);
+  }
+});
+
+// ─────────────────────────────────────────────────────────
 // CONSTANTS
 // ─────────────────────────────────────────────────────────
 const EMPTY = 0;
@@ -589,7 +622,11 @@ function playerFire(r, c) {
   playerView[r][c] = isHit ? HIT : MISS;
   refreshAiCell(r, c);
 
+  // Play Firing sound immediately
+  playSound(sfxFired);
+
   if (isHit) {
+    playSound(sfxHit);
     playerHits++;
     shakeCell(`ac-${r}-${c}`);
 
@@ -615,6 +652,7 @@ function playerFire(r, c) {
       recordMove('player', r, c, 'hit', null);
     }
   } else {
+    playSound(sfxMiss);
     log('player', `→ MISS at ${COLS[r]}${c + 1}.`);
     recordMove('player', r, c, 'miss', null);
   }
@@ -655,7 +693,11 @@ function executeAiMove() {
   aiView[r][c] = isHit ? HIT : MISS;
   refreshPlayerCell(r, c);
 
+  // Play Firing sound immediately for AI
+  playSound(sfxFired);
+
   if (isHit) {
+    playSound(sfxHit);
     aiHitsCount++;
     aiHitStack.push([r, c]);
     shakeCell(`pc-${r}-${c}`);
@@ -676,6 +718,7 @@ function executeAiMove() {
       recordMove('ai', r, c, 'hit', null);
     }
   } else {
+    playSound(sfxMiss);
     log('ai', `AI MISS at ${COLS[r]}${c + 1}.`);
     recordMove('ai', r, c, 'miss', null);
   }
